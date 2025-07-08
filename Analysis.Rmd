@@ -146,7 +146,7 @@ The following packages will be loaded for posterior analyses.
 
 ```{r libraries}
 # Making a list of the packages
-pckgs = c("ggplot2", "dplyr", "readxl", "gtsummary", "ggpubr", "rlang", "patchwork", "knitr", "lavaan", "sjPlot", "sjmisc")
+pckgs = c("ggplot2", "dplyr", "readxl", "gtsummary", "ggpubr", "rlang", "patchwork", "knitr")
 # Loading the packages
 invisible(lapply(pckgs, library, character.only = TRUE))
 ```
