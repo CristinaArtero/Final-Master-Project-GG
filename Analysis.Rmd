@@ -1,0 +1,853 @@
+---
+title: 'TFM: Analysis'
+author: 
+- "Cristina Artero Martínez (Main author)"
+- "Fernando Fernández-Aranda (Supervisor)"
+- "Marta Ribasés Haro (Collaborator)"
+date: "Last compiled on `r { Sys.setlocale('LC_TIME', 'C'); format(Sys.Date(), '%B %d, %Y') }`"
+output:
+  rmdformats::readthedown:
+    higlight: kate
+    code_folding: hide
+    toc_depth: 4
+  BiocStyle::html_document:
+    toc: true
+    number_sections: false
+    toc_float: true
+---
+
+<style type = "text/css">
+h1.title{ /* Title */
+  font-size: 40px
+}
+h1{ /* Header 1 */
+  font-size: 24px
+}
+h2{ /* Header 2 */
+  font-size: 20px
+}
+h3{ /* Header 3 */
+  font-size: 18px
+}
+h4{ /* Header 4 */
+  font-size: 15px
+}
+h5{ /* Header 5 */
+  font-size: 12px
+}
+</style>
+
+
+```{r startpoint, include = FALSE,echo = FALSE,message=FALSE}
+Sys.setlocale("LC_TIME", "English")
+startpoint = Sys.time()
+```
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+This document summarizes the analysis performed on the TFM titled "Association study of Val66Met *BDNF* polymorphism with eating and gambling disorders".
+
+This research project considers a population of patients diagnosed with eating disorders (EDs), specifically restrictive-type anorexia nervosa (AN-R), purging-type anorexia nervosa (AN-P) and bulimia nervosa (BN), and gambling disorder (GD), who were SNP-genotyped for the Val66Met *BDNF* polymorphism. Additionally, different psychometric measures were took from participants to quantify different psychological aspects (Table 1).
+
+<table style="width:100%">
+  <caption style="caption-side: top; text-align: left; font-weight: bold;">
+    Table 1. Overview of psychometric instruments used in the study
+  </caption>
+  <thead>
+    <tr>
+      <th style="width:30%">Psychometric test</th>
+      <th style="width:10%">Measurement</th>
+      <th style="width:10%">Number of items</th>
+      <th style="width:50%">Dimensions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>EDI-2: Eating Disorders Inventory 2</td>
+      <td>EDs screening</td>
+      <td>91</td>
+      <td>
+        <ul style="columns: 2; -webkit-columns: 2; -moz-columns: 2; margin: 0; padding-left: 1.2em; font-size: inherit; line-height: 1.2;">
+          <li style="margin: 0;">Drive for thinness</li>
+          <li style="margin: 0;">Body dissatisfaction</li>
+          <li style="margin: 0;">Interoceptive awareness</li>
+          <li style="margin: 0;">Bulimia</li>
+          <li style="margin: 0;">Interpersonal distrust</li>
+          <li style="margin: 0;">Ineffectiveness</li>
+          <li style="margin: 0;">Maturity fears</li>
+          <li style="margin: 0;">Perfectionism</li>
+          <li style="margin: 0;">Impulse regulation</li>
+          <li style="margin: 0;">Asceticism</li>
+          <li style="margin: 0;">Social insecurity</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>SCL-90-R: Symptom Checklist 90</td>
+      <td>Psychological distress and general psychopathology</td>
+      <td>90</td>
+      <td>
+        <ul style="columns: 2; -webkit-columns: 2; -moz-columns: 2; margin: 0; padding-left: 1.2em; font-size: inherit; line-height: 1.2;">
+          <li style="margin: 0;">Somatization</li>
+          <li style="margin: 0;">Obsessive-compulsive</li>
+          <li style="margin: 0;">Interpersonal sensitivity</li>
+          <li style="margin: 0;">Depression</li>
+          <li style="margin: 0;">Anxiety</li>
+          <li style="margin: 0;">Hostility</li>
+          <li style="margin: 0;">Phobic anxiety</li>
+          <li style="margin: 0;">Paranoid ideation</li>
+          <li style="margin: 0;">Psychoticism</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>TCI-R: Temperament and Character Inventory</td>
+      <td>Personality traits</td>
+      <td>240</td>
+      <td>
+        <ul style="columns: 2; -webkit-columns: 2; -moz-columns: 2; margin: 0; padding-left: 1.2em; font-size: inherit; line-height: 1.2;">
+          <li style="margin: 0;">Novelty seeking</li>
+          <li style="margin: 0;">Harm avoidance</li>
+          <li style="margin: 0;">Reward dependence</li>
+          <li style="margin: 0;">Persistence</li>
+          <li style="margin: 0;">Self-directedness</li>
+          <li style="margin: 0;">Cooperativity</li>
+          <li style="margin: 0;">Self-transcendence</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>DSM-5 GD: Diagnostic Questionnaire for Gambling Disorder</td>
+      <td>GD screening</td>
+      <td>19</td>
+      <td><i>No dimensions</i></td>
+    </tr>
+    <tr>
+      <td>SOGS: South Oaks Gambling Screen</td>
+      <td>GD screening and severity assessment</td>
+      <td>20</td>
+      <td><i>No dimensions</i></td>
+    </tr>
+  </tbody>
+</table>
+
+The study aims to:
+
+- Assess the association of Val66Met *BDNF* with EDs and GD as a transdiagnostic factor.
+- Explore modulating factors for this interaction, such as psychopathology, clinical severity, etc.
+- Analyze the association between Val66Met *BDNF* and treatment outcome in patients diagnosed with EDs (specifically AN and BN) or GD.
+
+
+## Loading packages and data
+
+The following packages will be loaded for posterior analyses.
+
+```{r libraries}
+# Making a list of the packages
+pckgs = c("ggplot2", "dplyr", "readxl", "gtsummary", "ggpubr", "rlang", "patchwork", "knitr", "lavaan", "sjPlot", "sjmisc")
+# Loading the packages
+invisible(lapply(pckgs, library, character.only = TRUE))
+```
+
+The dataset will be loaded and stored in an object named "trans".
+
+```{r directories}
+# Loading the data
+trans <- read_excel(path = "./base.xlsx", sheet = "trans")
+```
+
+## Preparing the dataset
+
+Before conducting any analysis, data must be cleaned. In this case, some categorical variables are declared as such.
+
+```{r setting variables}
+trans <- trans %>%
+  mutate(bdnf_val = factor(bdnf_val, levels = c("Met/Met", "Val/Met", "Val/Val"))) %>% # BDNF Val66Met possible genotypes
+  mutate(bdnf_val2 = factor(bdnf_val2, levels = c("Val/Met or Met/Met", "Val/Val"))) %>% # BDNF Val66Met carrier status
+  mutate(bdnf_27c = factor(bdnf_27c, levels = c("CC", "CT", "TT"))) %>%
+  mutate(outcome = factor(outcome, levels = c("full remission", 
+                                              "partial remission", 
+                                              "non-remission/dropout"))) %>% # treatment outcome categorised in 3 levels
+  mutate(outcome_2 = factor(outcome_2, levels = c("full remission", 
+                                                  "partial remission", 
+                                                  "non-remission", "dropout"))) %>% # treatment outcome categorised in 4 levels
+  mutate(diagnosis = factor(diagnosis, levels = c("AN-R", "AN-P", "BN", "GD"))) %>% # diagnosis
+  mutate(sex = factor(sex, levels = c("female", "male"))) %>% # sex
+  mutate(est_civil = factor(est_civil, levels = c("single", "married", "divorced"))) %>% # civil status
+  mutate(estudios = factor(estudios, levels = c("primarios", "graduado escolar", 
+                                                "bachillerato incompleto/fp1", 
+                                                "bachillerato completo/fp2",
+                                                "universidad incompleta",
+                                                "universidad completa",
+                                                "máster-doctorado"))) # educational level
+
+# Since educational level is categorised in many different groups, they will be classified into primary, secondary and superior studies
+trans <- transform(trans, studies = ifelse(estudios %in% c("primarios","graduado escolar", "bachillerato incompleto/fp1"), "primary", 
+                                           ifelse(estudios %in% c("bachillerato completo/fp2", "universidad incompleta"), "secondary",
+                                                  ifelse(estudios %in% c("universidad completa", "máster-doctorado"), "university", NA))))
+```
+
+Any possible outlier is also removed from the dataset (e.g., AN patient with BMI ≥ 18.5 kg/m<sup>2</sup>) or those individuals with high amount of missingness.
+
+```{r removing outliers}
+trans <- trans[!(trans$diagnosis %in% c("AN-R", "AN-P") & trans$bmi >= 18.5) & # AN patients with normal weight
+                 !trans$CASO %in% c(10263, 10441, 10723, 10735, 11000, 11452),] # individuals with high missingness
+```
+
+One of the objectives of this study is to assess if there is a relationship between the severity of the disorder and *BDNF* Val66Met. For that, we will compute a severity index based on the severity indications provided by DSM-5 guidelines. As EDs have 4 severity levels compared to GD, which has 3, we will collapse the extreme category with the severe category in EDs.
+
+```{r severity computation}
+# Severity index function
+assign_severity <- function(df) {
+  # For AN patients, divide them into the following categories provided by the DSM-5:
+  # - mild: ≥ 17 kg/m²
+  # - moderate: 16-17 kg/m²
+  # - severe: 15-16 kg/m²
+  # - extreme: < 15 kg/m²
+  if (df["diagnosis"] %in% c("AN-R", "AN-P")) {
+    if (!is.na(as.numeric(df["bmi"]))) {
+      if (as.numeric(df["bmi"]) < 15) {
+        return("extreme")
+      } else if (as.numeric(df["bmi"]) >= 15 & as.numeric(df["bmi"]) < 16) {
+        return("severe")
+      } else if (as.numeric(df["bmi"]) >= 16 & as.numeric(df["bmi"]) < 17) {
+        return("moderate")
+      } else {
+        return("mild")
+      }
+    }
+  # For BN patients, divide them into the following categories provided by the DSM-5:
+  # - mild: ≥ 3 vomits per week
+  # - moderate: 4-7 vomits per week
+  # - severe: 8-13 vomits per week
+  # - extreme: > 13 vomits per week
+  } else if (df["diagnosis"] == "BN") {
+    if (!is.na(as.numeric(df["vomit_week"]))){
+      if (as.numeric(df["vomit_week"]) > 13) {
+        return("extreme")
+      } else if (as.numeric(df["vomit_week"]) >= 8 & as.numeric(df["vomit_week"]) <= 13) {
+        return("severe")
+      } else if (as.numeric(df["vomit_week"]) >= 4 & as.numeric(df["vomit_week"]) <= 7) {
+        return("moderate")
+      } else if (as.numeric(df["vomit_week"]) >= 1 & as.numeric(df["vomit_week"]) <= 3) {
+        return("mild")
+      }
+    }
+  # For GD patients, divide them into the following categories provided by the DSM-5:
+  # - mild: > 6 criteria
+  # - moderate: > 8 criteria
+  # - severe: > 10 criteria
+  } else if (df["diagnosis"] == "GD") {
+    if (!is.na(as.numeric(df["dsm_jp_crit"]))) {
+      if (as.numeric(df["dsm_jp_crit"]) < 6) {
+        return("mild")
+      } else if (as.numeric(df["dsm_jp_crit"]) < 8) {
+        return("moderate")
+      } else if (as.numeric(df["dsm_jp_crit"]) < 10) {
+        return("severe")
+      }
+    }
+  }
+  return(NA) # Return NA if no criteria match
+}
+
+# Apply function to dataframe
+trans$severity <- apply(trans, 1, assign_severity)
+
+# Define the order of the levels of severity
+trans <- trans %>%
+  mutate(severity = factor(severity, levels = c("mild", "moderate", "severe", "extreme")))
+```
+
+Color palettes will be used later for graphical representations. Below, there is a chunk of code to prepare them.
+
+```{r color palettes}
+# Genotype palette
+genotypes <- c("#E63946", "#BA6A7C", "#8D99AE") # Met/Met: #E63946, Val/Met: #BA6A7C, Val/Val: 8D99AE
+# Carrier palette
+carriers <- c("#E63946", "#8D99AE") # carrier (Met/Met + Val/Met): #E63946, non-carrier (Val/Val): #8D99AE
+# Severity palette
+severity_scores <- c("#F8FA89", "#E9B569", "#DA6F4A", "#CB2A2A") # mild: #F8FA89, moderate: #E9B569, severe: #DA6F4A, extreme: #CB2A2A
+# Outcome tetratomic palette
+outcome_tetra <- c("#43A643", "#FFE373", "#AF3A3C", "#711313") # full remission: #43A643, partial remission: #FFE373, bad remission: #AF3A3C, dropout: #711313
+# Outcome dichotomic palette
+outcome_dicho <- c("#43A643", "#9CA642", "#AF3A3C", "#711313") # full remission: #AAAF3F, partial remission: #FFE373, bad remission: #AF3A3C, dropout: #711313
+```
+
+
+## Revising genotype frequencies
+
+### Genotype frequencies
+Genotype frequencies are checked.
+
+<div style="display: flex;"> <!-- Left: Table --> <div style="width: 35%; padding-left: 10px;">
+```{r genotype frequency table} 
+# Create the table for genotype frequencies
+tbl <- table(trans$bdnf_val)
+# Add the percentages
+tbl <- cbind(tbl, paste0(round(tbl/sum(tbl)*100, 2), "%"))
+# Generate a more elegant table
+kable(tbl, col.names = c("Genotype", "Frequency", "Percentage"))
+``` 
+</div> <!-- Right: Plot --> <div style="width: 65%; padding-right: 10px;"> 
+```{r pie chart genotypes, results='asis'} 
+data_summary <- trans %>%
+  count(bdnf_val) %>% # Get the genotype frequencies
+  mutate(Percentage = n / sum(n) * 100) %>% # Calculate the percentages
+  ungroup() # Ungroup, so dplyr does not consider this for future analyses
+  
+ggplot(data_summary, aes(x = "", y = Percentage, fill = bdnf_val)) + # Consider the percentage of each genotype
+  geom_bar(stat = "identity") + # Produce a bar plot
+  coord_polar(theta = "y") + # Transform the bar plot into a pie chart
+  geom_text(aes(label = paste0(round(Percentage, 1), "%"), fontface = "bold"),
+            position = position_stack(vjust = 0.5), size = 4, color = "black") + # Add the percentages to the plot
+  labs(fill = "Genotype") + # Name the legend's title as "Genotype frequencies"
+  scale_fill_manual(values = genotypes) + # Color the pie chart with the color paletter for genotypes
+  theme_void() # Make a void theme so it looks as clean as possible
+``` 
+</div> </div>
+
+
+### Carrier status frequencies
+As there are only `r sum(trans$bdnf_val == "Met/Met")` individuals with Met/Met genotype, we can merge Met/Met and Val/Met individuals and differentiate groups by carrier or non-carriers.
+
+<div style="display: flex;"> <!-- Left: Table --> <div style="width: 35%; padding-left: 10px;">
+```{r carrier status frequency table}
+# Create the table for carrier status frequencies
+tbl <- table(trans$bdnf_val2)
+# Add the percentages
+tbl <- cbind(tbl, paste0(round(tbl/sum(tbl)*100, 2), "%"))
+# Generate a more elegant table
+kable(tbl, col.names = c("Carrier status", "Frequency", "Percentage")) 
+``` 
+</div> <!-- Right: Plot --> <div style="width: 65%; padding-right: 10px;"> 
+```{r pie chart carrier status, results='asis'} 
+data_summary <- trans %>%
+  count(bdnf_val2) %>% # Get the carrier status frequencies
+  mutate(Percentage = n / sum(n) * 100) %>% # Calculate the percentages
+  ungroup() # Ungroup, so dplyr does not consider this for future analyses
+  
+ggplot(data_summary, aes(x = "", y = Percentage, fill = bdnf_val2)) + # Consider the percentage of the carriers
+  geom_bar(stat = "identity") + # Produce a bar plot
+  coord_polar(theta = "y") + # Transform the bar plot into a pie chart
+  geom_text(aes(label = paste0(round(Percentage, 1), "%"), fontface = "bold"),
+            position = position_stack(vjust = 0.5), size = 4, color = "black") + # Add the percentages to the plot
+  labs(fill = "Carrier status") + # Name the legend's title as "Carrier status frequencies"
+  scale_fill_manual(values = carriers) + # Color the pie chart with the color palette for carrier status
+  theme_void() # Make a void theme so it looks as clean as possible
+``` 
+</div> </div>
+
+Given the low representation of AA individuals, for posterior analyses, two groups will be defined: Val/Val (homozygous wild-type) and Val66Met carriers (heterozygous and homozygous variant).
+
+## Checking for normality
+
+Given that some variables are continuous, normality must be checked in order to decide which statistical test to use.
+
+```{r normality, fig.height=30, fig.width=10}
+# Prepare a vector with the name of all psychometric dimensions so we can iterate through them
+psych_dims <- c("Age", "Age of onset", "Duration", "BMI", "Vomits/week", "SOGS criteria", "EDI-2: Drive for thinness", "EDI-2: Body dissatisfaction", "EDI-2: Interoceptive awareness", "EDI-2: Bulimia", "EDI-2: Interpersonal distrust", "EDI-2: Ineffectiveness", "EDI-2: Maturity fears", "EDI-2: Perfectionism", "EDI-2: Impulse regulation", "EDI-2: Asceticism", "EDI-2: Social insecurity", "EDI-2 Total", "SCL-90-R: Somatization", "SCL-90-R: Obessive-compulsive", "SCL-90-R: Interpersonal sensitivity", "SCL-90-R: Depression", "SCL-90-R: Anxiety", "SCL-90-R: Hostility", "SCL-90-R: Phobic anxiety", "SCL-90-R: Paranoid ideation", "SCL-90-R: Psychoticism", "SCL-90-R: GSI", "SCL-90-R: PST", "SCL-90-R: PSDI", "TCI-R: Novelty seeking", "TCI-R: Harm avoidance", "TCI-R: Reward dependence", "TCI-R: Persistence", "TCI-R: Self-directedness", "TCI-R: Cooperativeness", "TCI-R: Self-transcendence")
+
+# Select psychometric variables and only the totals (and exclude the validy)
+psych_var <- c("age", "onset", "duration", "bmi", "vomit_week", "sogs_crit", setdiff(
+  grep("^(scl|edi|tci)_[a-zA-Z]+_pre$", names(trans), value = TRUE),
+  "tci_val_pre"))
+# Prepare a list where plots are stored
+plots <- list()
+
+# For loop to iterate through psychometric variables and evaluate normality for each one
+for (var in 1:length(psych_var)) { # continuous variables to check
+  
+  trans %>% 
+    group_by(bdnf_val2) %>% # separate by group
+    rstatix::shapiro_test(!!sym(psych_var[var])) %>% # run a normality test on each of them 
+    # Kolmogorov??? ks.test
+    print() # show the results
+  
+    p <- ggplot(trans, aes_string(x = psych_var[var], fill = "bdnf_val2")) + # select the psychometric variable and color the plot by carrier status
+      geom_histogram(bins = 20, position = "identity") + # make a histogram
+      facet_wrap(~bdnf_val2) + # separate the plots by carrier status (no overlap)
+      labs(title = psych_dims[var], y = "Counts", fill = expression(paste(italic("BDNF"), "Val66Met"))) + # title for the plot, X and Y-axis and legend
+      scale_fill_manual(values = carriers) + # Color the histograms with these specific colors
+      theme_bw() + # black and white theme
+      theme(axis.title.x = element_blank(), legend.position = "none") # Remove the legend
+  
+  # Store the plots into the list  
+  plots[[var]] <- p
+}
+
+final_plot <- (guide_area() / wrap_plots(plots, ncol = 2)) + # Combine all plots into a 2x6 layout
+  plot_layout(heights = c(0.01, 1), guides = 'collect') & # Collect all legends and use just one
+  theme(legend.position = "top") # Put the legend on top
+
+final_plot
+```
+
+Plots show that age, age on onset, duration, EDI-2 and SCL-90-R dimensions do not follow a normal distribution for the different groups. In that case, differences must be assessed using Wilcoxon rank sum test. With regards to TCI-R, its dimensions mostly follow a normal distribution. Therefore, a t-test is appropriate for this questionnaire.
+
+## Descriptive statistics
+
+```{r descriptive statistics}
+# Having considered the distribution of the data, we can make a table for descriptive statistics
+trans %>%
+  select(diagnosis, sex, age, onset, duration, studies, est_civil, sit_lab, bdnf_val, bdnf_val2, outcome_2) %>% # consider diagnosis, sociodemographic and genteic variables
+  tbl_summary(by = diagnosis, # divide by diagnosis
+              missing = "no", # do not add missing counts
+              statistic = all_continuous() ~ "{mean} ± {sd}, {median} ({p25}, {p75})", # for continuous variables, show them as mean ± SD, median (IQR)
+              label = list(sex ~ "Sex", age ~ "Age (years)", onset ~ "Age of onset (years)", duration ~ "Duration (years)", studies ~ "Academical status", est_civil ~ "Civil status", sit_lab ~ "Professional status", bdnf_val ~ "BDNF Val66Met", bdnf_val2 ~ "Carrier status", outcome_2 ~ "Outcome")) %>% # Change variable names to a cleaner format
+  add_n() %>% # Add the total number of observations
+  add_p(test = list(all_continuous() ~ "kruskal.test", all_categorical() ~ "chisq.test")) %>% # for continuous variables run a Kruskal-Wallis test, for categorical variables run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) # show in bold p-values lower than 0.05
+```
+
+## Comparison across Val66Met variant groups
+
+### Sociodemographic and clinical variables
+
+```{r val66met comparison}
+# Having considered the distribution of the data, we can make a table to compare based on the variant
+trans %>%
+  select(diagnosis, sex, age, onset, duration, studies, est_civil, sit_lab, bdnf_val2, outcome_2) %>% # consider diagnosis, sociodemographic and genetic variables
+  tbl_summary(by = bdnf_val2, # divide by Val66Met variants groups
+              missing = "no", # do not add missing counts
+              statistic = all_continuous() ~ "{mean} ± {sd}, {median} ({p25}, {p75})", # for continuous variables, show them as mean ± SD, median (IQR)
+              label = list(diagnosis ~ "Diagnosis", sex ~ "Sex", age ~ "Age (years)", onset ~ "Age of onset (years)", duration ~ "Duration (years)", studies ~ "Academical status", est_civil ~ "Civil status", sit_lab ~ "Professional status", outcome_2 ~ "Outcome")) %>% # Change variable names to a cleaner format
+  add_n() %>% # Add the total number of observations
+  add_p(test = list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")) %>% # for continuous variables run a Wilcoxon rank sum test, for categorical variables run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) # show in bold p-values lower than 0.05
+
+# Compute Cohen's H
+## Diagnosis + Val66Met
+pwr::ES.h(0.23, 0.089)
+pwr::ES.h(0.076, 0.11)
+pwr::ES.h(0.3, 0.3)
+pwr::ES.h(0.39, 0.5)
+## Sex + Val66Met
+pwr::ES.h(0.56, 0.45)
+## Age + Val66Met
+rstatix::wilcox_effsize(age ~ bdnf_val2, data = trans)
+## Age of onset + Val66Met
+rstatix::wilcox_effsize(onset ~ bdnf_val2, data = trans)
+## Duration + Val66Met
+rstatix::wilcox_effsize(duration ~ bdnf_val2, data = trans)
+## Academic status + Val66Met
+pwr::ES.h(0.58, 0.43)
+pwr::ES.h(0.36, 0.46)
+pwr::ES.h(0.061, 0.11)
+## Civil status + Val66Met
+pwr::ES.h(0.6, 0.58)
+pwr::ES.h(0.28, 0.39)
+pwr::ES.h(0.12, 0.036)
+## Employment status + Val66Met
+pwr::ES.h(0.6, 0.65)
+```
+
+### Psychometric variables
+
+Having considered the distribution of the data, we can make a comparison table between the subgroups at baseline. Continuous variables will be assessed with the Kruskal-Wallis test or a Wilcoxon rank sum test showing the mean, the SD, the median and the IQR. Categorical variables will be tested with the Chi-squared test and represented with the number of observations and their percentage. 
+
+```{r psychometry by carrier status}
+tbl <- trans %>%
+  select(bdnf_val2, sex, age, onset, duration, bmi, vomit_week,
+         edi_dt_pre, edi_bd_pre, edi_ia_pre, edi_b_pre, edi_id_pre, edi_i_pre,
+         edi_mf_pre, edi_p_pre, edi_ir_pre, edi_a_pre, edi_si_pre, edi_tot_pre, 
+         scl_som_pre, scl_oc_pre, scl_si_pre, scl_dep_pre, scl_ans_pre,
+         scl_host_pre, scl_af_pre, scl_ip_pre, scl_psi_pre, scl_gsi_pre,
+         scl_pst_pre, scl_psdi_pre,
+         tci_nst_pre, tci_hat_pre, tci_rdt_pre, tci_pst_pre, tci_sdt_pre,
+         tci_ct_pre, tci_stt_pre,
+         dsm_jp_crit,
+         sogs_crit,
+         severity) %>% # select variables of interest (psychometric dimensions, gambling diagnosis criteria and severity)
+  tbl_summary(by = bdnf_val2, # divide by carrier status
+              missing = "no", # do not add missing counts
+              statistic = all_continuous() ~ "{mean} ± {sd}, {median} ({p25}, {p75})", # for continuous variables, show them as mean ± SD, median (IQR)
+              label = list(edi_dt_pre ~ "EDI-2: Drive for thinness", edi_bd_pre ~ "EDI-2: Body dissatisfaction", edi_ia_pre ~ "EDI-2: Interoceptive awareness", edi_b_pre ~ "EDI-2: Bulimia", edi_id_pre ~ "EDI-2: Interpersonal distrust", edi_i_pre ~ "EDI-2: Ineffectiveness", edi_mf_pre ~ "EDI-2: Maturity fears", edi_p_pre ~ "EDI-2: Perfectionism", edi_ir_pre ~ "EDI-2: Impulse regulation", edi_a_pre ~ "EDI-2: Asceticism", edi_si_pre ~ "EDI-2: Social insecurity", edi_tot_pre ~ "EDI-2: Total", scl_som_pre ~ "SCL-90-R: Somatization", scl_oc_pre ~ "SCL-90-R: Obsessive-compulsive", scl_si_pre ~ "SCL-90-R: Interpersonal sensitivity", scl_dep_pre ~ "SCL-90-R: Depression", scl_ans_pre ~ "SCL-90-R: Anxiety", scl_host_pre ~ "SCL-90-R: Hostility", scl_af_pre ~ "SCL-90-R: Phobic anxiety", scl_ip_pre ~ "SCL-90-R: Paranoid ideation", scl_psi_pre ~ "SCL-90-R: Psychoticism", scl_gsi_pre ~ "SCL-90-R: Global severity index (GSI)", scl_pst_pre ~ "SCL-90-R: Positive symptoms total (PST)", scl_psdi_pre ~ "SCL-90-R: Positive symptomp distress index (PSDI)", tci_nst_pre ~ "TCI-R: Novelty seeking", tci_hat_pre ~ "TCI-R: Harm avoidance", tci_rdt_pre ~ "TCI-R: Reward dependence", tci_pst_pre ~ "TCI-R: Persistence", tci_sdt_pre ~ "TCI-R: Self-directedness", tci_ct_pre ~ "TCI-R: Cooperativity", tci_stt_pre ~ "TCI-R: Self-transcendence", dsm_jp_crit ~ "DSM-GD criteria", sogs_crit ~ "SOGS criteria")) %>% # Change variable names to a cleaner format)
+  add_n() %>% # Add the total number of observations
+  add_p(test = list(matches("^tci_") ~ "t.test", 
+                    all_continuous() ~ "wilcox.test")) %>% # for TCI-R variables run a t-test, for other continuous variables run a Wilcox test
+  add_difference(all_continuous() ~ "cohens_d", 
+                 test.args = all_continuous() ~ list(var.equal = FALSE)) %>%
+  modify_column_hide(conf.low) %>%
+  bold_labels() %>%
+  bold_p(t = 0.05)
+
+# Define variables of interest
+vars <- c("edi_dt_pre", "edi_bd_pre", "edi_ia_pre", "edi_b_pre", "edi_id_pre",
+          "edi_i_pre", "edi_mf_pre", "edi_p_pre", "edi_ir_pre", "edi_a_pre",
+          "edi_si_pre", "edi_tot_pre", 
+          "scl_som_pre", "scl_oc_pre", "scl_si_pre", "scl_dep_pre",
+          "scl_ans_pre", "scl_host_pre", "scl_af_pre", "scl_ip_pre",
+          "scl_psi_pre", "scl_gsi_pre", "scl_pst_pre", "scl_psdi_pre", 
+          "sogs_crit")
+
+# Compute Cliff's delta
+wilcox_effize_results <- purrr::map_dfr(vars, function(var){
+  result <- rstatix::wilcox_effsize(as.formula(paste(var, "~ bdnf_val2")), data = trans)
+  tibble(
+    variable = var,
+    effect = round(result$effsize, 2),
+    magnitude = result$magnitude,
+    method = "wilcox_effsize"
+  )
+})
+
+vars <- c("tci_nst_pre", "tci_hat_pre", "tci_rdt_pre", "tci_pst_pre",
+          "tci_sdt_pre", "tci_ct_pre", "tci_stt_pre")
+
+# Compute Cohen's D
+cohens_results <- purrr::map_dfr(vars, function(var) {
+    result <- effectsize::cohens_d(as.formula(paste(var, "~ bdnf_val2")),
+        data = trans
+    )
+    tibble(
+        variable = var, 
+        effect = round(result$Cohens_d, 2),
+        magnitude = ifelse(result$Cohens_d >= 2, "huge", 
+                           ifelse(result$Cohens_d >= 0.87, "very large", 
+                                  ifelse(result$Cohens_d >= 0.63, "large", 
+                                         ifelse(result$Cohens_d >= 0.41, "medium", 
+                                                ifelse(result$Cohens_d >= 0.2, "small", "negligible"))))),
+        method = "cohen"
+    )
+})
+
+all_effects <- bind_rows(wilcox_effize_results, cohens_results) %>%
+  mutate(effect_label = paste0(effect, " (", magnitude, ")"))
+
+tbl <- tbl %>%
+  modify_table_body(~ .x %>%
+    right_join(all_effects, by = c("variable")) %>%
+    mutate(`**Effect size**` = case_when(
+      magnitude %in% c("small", "medium", "large", "very large", "huge") & p.value < 0.05 ~
+        gt::md(paste0("**", effect, " (", magnitude, ")**")),
+      TRUE ~ gt::md(paste0(effect, " (", magnitude, ")"))
+))
+  ) %>%
+  modify_header(`**Effect size**` = "**Effect Size (Cohen's *d* or Cliff’s Δ)**") %>%
+  as_gt() %>%
+  gt::fmt_markdown(columns = "**Effect size**")
+
+tbl
+```
+
+```{r psychometric figures, fig.height=15, fig.width=10}
+# Prepare a vector with the name of all dimensions so we can iterate through them
+scl_dims <- c("Somatization", "Obessive-compulsive", "Interpersonal sensitivity", "Depression", "Anxiety", "Hostility", "Phobic anxiety", "Paranoid ideation", "Psychoticism", "GSI", "PST", "PSDI")
+# Select columns that start with scl and end with pre (SCL results prior to therapy)
+scl_cols <- c(grep("^scl.*pre$", names(trans), value = TRUE))
+# Prepare a list where plots are stored
+plots <- list()
+
+# For loop to iterate through all dimensions to produce plots comparing psychopathology dimensions across carrier status categories
+for (i in 1:length(scl_cols)){
+  p <- ggplot(trans, aes_string(x = "bdnf_val2", y = scl_cols[i], fill = "bdnf_val2")) + # Compare the carrier status with each dimension and color it by carrier status category
+      geom_violin(trim = FALSE, alpha = 0.5, position = position_dodge(width = 0.9)) + # Produce a violin plot
+      geom_boxplot(width = 0.15, position = position_dodge(width = 0.9)) + # Produce a boxplot inside the violin plot
+      stat_compare_means(method = "wilcox.test", label.x = 1.3) + # Add the p-value to the plot
+      labs(y = scl_dims[i], fill = expression(paste(italic("BDNF"), "Val66Met"))) + # Add the name of the dimension to the Y-axis title
+      scale_fill_manual(values = carriers) + # Color the boxplots with these specific colors
+      theme_bw() + # Use the black and white theme
+      theme(axis.title.x = element_blank(), legend.position = "none") # Remove the X-axis title and the legend
+  # Include the plot to the list of plots
+  plots[[i]] <- p # Add the plot to the list of plots
+}
+
+final_plot <- wrap_plots(plots, ncol = 2) + # Combine all plots into a 2x6 layout
+  plot_annotation(title = "SCL-90-R", theme = theme(plot.title = element_text(hjust = 0.5, size = 17, face = "bold"))) +
+  plot_layout(guides = 'collect') & # Collect all legends and use just one
+  theme(legend.position = "top") # Put the legend on top
+
+# Show the final plot
+final_plot
+```
+
+
+```{r boxplot + jitter, fig.height=14, fig.width=10}
+# Prepare a vector with the name of all dimensions so we can iterate through them
+scl_dims <- c("Somatization", "Obessive-compulsive", "Interpersonal sensitivity", "Depression", "Anxiety", "Hostility", "Phobic anxiety", "Paranoid ideation", "Psychoticism", "GSI", "PST", "PSDI")
+# Select columns that start with scl and end with pre (SCL-90-R results prior to therapy)
+scl_cols <- c(grep("^scl.*pre$", names(trans), value = TRUE))
+# Prepare a list where plots are stored
+plots <- list()
+
+# For loop to iterate through all dimensions to produce plots comparing psychopathology dimensions across carrier status categories
+for (i in 1:length(scl_cols)){
+  if(scl_cols[i] != "scl_pst_pre"){
+    y_max = max(trans[[scl_cols[i]]], na.rm = TRUE)-0.5
+  }
+  else{
+    y_max = max(trans[[scl_cols[i]]], na.rm = TRUE)-15
+  }
+  p <- ggplot(trans, aes_string(x = "bdnf_val2", y = scl_cols[i], fill = "bdnf_val2")) + # Compare the carrier status with each dimension and color it by carrier status category
+      geom_boxplot(width = 0.15, position = position_dodge(width = 0.9)) + # Produce a boxplot
+      geom_jitter(shape = 16, alpha = 0.4, position = position_jitter(0.2)) + # Produce a boxplot inside the boxplot
+      stat_compare_means(method = "wilcox.test", label.x = 1.3, label.y = y_max) + # Add the p-value to the plot
+      labs(y = scl_dims[i], fill = expression(paste(italic("BDNF"), "Val66Met"))) + # Add the name of the dimension to the Y-axis title
+      scale_fill_manual(values = carriers) + # Color the boxplots with these specific colors
+      theme_bw() + # Use the black and white theme
+      theme(axis.title.x = element_blank(), legend.position = "none") # Remove the X-axis title and the legend
+  # Include the plot to the list of plots
+  plots[[i]] <- p # Add the plot to the list of plots
+}
+
+final_plot <- wrap_plots(plots, ncol = 2) + # Combine all plots into a 2x6 layout
+  plot_annotation(title = "SCL-90-R", theme = theme(plot.title = element_text(hjust = 0.5, size = 17, face = "bold"))) +
+  plot_layout(guides = 'collect') & # Collect all legends and use just one
+  theme(legend.position = "top") # Put the legend on top
+
+# Show the final plot
+final_plot
+```
+
+## Severity
+
+Another objective in this study is to explore the role of severity between Val66Met *BDNF* and EDs and GD. For that, a severity score scale has been computed considering DSM-5 classification criteria.
+
+### Anorexia nervosa
+
+For AN, Val/Val individuals have statistically significant less severe diagnoses than Val/Met and Met/Met individuals. The BMI itself serves as an indicator for this association.
+
+```{r severity AN}
+trans %>%
+  filter(diagnosis %in% c("AN-R", "AN-P")) %>% # filter by diagnosis and include only AN patients
+  select(bdnf_val2, bmi, severity) %>% # select carrier status and variables associated to severity
+  tbl_summary(by = bdnf_val2, # divide by carrier status
+              missing = "no", # show no missings
+              label = list(bmi ~ "BMI (kg/m<sup>2</sup>)", severity ~ "Severity")) %>% # Change the name of the variables
+  add_p(test = all_categorical() ~ "chisq.test") %>% # run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) %>% # show in bold p-values lower than 0.05
+  as_gt() %>% # 
+  gt::fmt_markdown(columns = vars(label)) # Convert markdown syntax to HTML, so the superscript is added
+```
+
+### Bulimia nervosa
+
+For BN, Val/Val individuals have statistically significant more severe diagnoses than Val/Met and Met/Met individuals.
+
+```{r severity BN}
+trans %>%
+  filter(diagnosis == "BN") %>% # filter by diagnosis and include only BN patients
+  select(bdnf_val2, vomit_week, severity) %>% # select carrier status and variables associated to severity
+  tbl_summary(by = bdnf_val2, # divide by carrier status
+              missing = "no", # show no missings
+              label = list(vomit_week ~ "Vomits/week", severity ~ "Severity")) %>% # Change the name of the variables
+  add_p(test = all_categorical() ~ "chisq.test") %>% # run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) # show in bold p-values lower than 0.05
+```
+
+### Gambling disorder
+
+No differences were observed between both groups for GD patients.
+
+```{r severity gambling}
+trans %>%
+  filter(diagnosis == "GD") %>% # filter by diagnosis and include only GD patients
+  select(bdnf_val2, sogs_crit, severity) %>% # select carrier status and variables associated to severity
+  tbl_summary(by = bdnf_val2, # divide by carrier status
+              missing = "no", # show no missings
+              label = list(sogs_crit ~ "SOGS criteria", severity ~ "Severity")) %>% # Change the name of the variables
+  add_p(test = all_categorical() ~ "chisq.test") %>% # run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) # show in bold p-values lower than 0.05
+```
+
+### All
+
+Considering all diagnoses, no statistically significant differences were observed.
+
+```{r severity all}
+trans %>%
+  select(bdnf_val2, severity) %>% # select carrier status and variables associated to severity
+  tbl_summary(by = bdnf_val2, # divide by carrier status
+              missing = "no", # show no missings
+              label = list(severity ~ "Severity")) %>% # Change the name of the variables
+  add_p(test = all_categorical() ~ "chisq.test") %>% # run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) %>% # show in bold p-values lower than 0.05
+  as_gt() %>% # 
+  gt::fmt_markdown(columns = vars(label)) # Convert markdown syntax to HTML, so the superscript is added
+```
+
+```{r severity plots, fig.height=8, fig.width=11}
+# Prepare a list to store plots
+plots <- list()
+# Prepare a vector containing the different diagnoses to iterate through them
+diagnoses <- c("AN-R", "AN-P", "BN", "GD")
+
+all <- trans %>%
+  filter(!is.na(severity)) %>%  # Remove NAs before
+  count(severity, bdnf_val2) %>% # Count the combinations of severity scores and Val66Met carrier status
+  group_by(bdnf_val2) %>% # Group the counts by carriers status
+  mutate(pct = prop.table(n) * 100) %>% # Calculate the percentage
+  ggplot() + 
+  aes(bdnf_val2, pct, fill = severity) + # Compare the proportion of outcomes across carriers and non-carriers and color by outcome
+  geom_bar(stat = "identity") + # Make it a bar plot. Add the show.legend argument so later the legend will be the same for all plots
+  labs(fill = "Severity", title = "All diagnoses") + # Change the X-axis title, the legend title and the title of the plot in a more appropriate way
+  geom_text(aes(label = paste0(sprintf("%1.1f", pct),"%")),
+            position = position_stack(vjust = 0.5)) + # Show the percentages in the plot and add the percentage symbol (%) to the labels 
+  theme_bw() + # Use the black and white theme
+  scale_y_continuous(labels = function(x) paste0(x,"%")) + # Add the percentage symbol to the labels from the Y-axis
+  scale_fill_manual(values = severity_scores, labels = c("Mild", "Moderate", "Severe", "Extreme")) + # Color the different outcome categories with the specified colors and with the specified labels
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank()) # Remove the X-axis and Y-axis titles
+
+# For loop to iterate through all diagnoses to produce plots comparing severity scores proportions across Val66Met groups
+for (i in 1:length(diagnoses)){
+  p <- trans %>%
+    filter(!is.na(severity)) %>%  # Remove NAs before
+    filter(diagnosis == diagnoses[i]) %>% # Filter for each diagnosis (as we are going to produce a plot for each diagnosis, we must filter by diagnosis and then generate the plot)
+    count(severity, bdnf_val2) %>% # Count the combinations of severity scores and Val66Met groups
+    group_by(bdnf_val2) %>% # Group the counts by Val66Met groups
+    mutate(pct = prop.table(n) * 100) %>% # Calculate the percentage
+    ggplot() + 
+    aes(bdnf_val2, pct, fill = severity) + # Compare the proportion of outcomes across genotypes and color by outcome
+    geom_bar(stat = "identity", show.legend = TRUE) + # Make it a bar plot. Add the show.legend argument so later the legend will be the same for all plots
+    labs(x = "Val66Met", fill = "Severity", title = diagnoses[i]) + # Change the X-axis title, the legend title and the title of the plot in a more appropriate way
+    geom_text(aes(label = paste0(sprintf("%1.1f", pct),"%")),
+              position = position_stack(vjust = 0.5)) + # Show the percentages in the plot and add the percentage symbol (%) to the labels 
+    theme_bw() + # Use the black and white theme
+    scale_y_continuous(labels = function(x) paste0(x,"%")) + # Add the percentage symbol to the labels from the Y-axis
+    scale_fill_manual(values = severity_scores, labels = c("Mild", "Moderate", "Severe", "Extreme"), drop = FALSE) + # Color the different outcome categories with the specified colors and with the specified labels
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank()) # Remove the X-axis and the Y-axis titles
+  plots[[i]] <- p # Add the plot to the list of plots
+}
+
+guide_area() + (all + (plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]])) + # Combine all plots into a 2x2 layout
+  plot_layout(guides = "collect", nrow = 2, heights = c(1,10)) + # Collect all legends and use just one
+  plot_annotation(title = "Severity distribution by Val66Met groups", theme = theme(plot.title = element_text(hjust = 0.5, size = 17, face = "bold"))) & # Set the title in the center, big and bold
+  theme(legend.position = "top") # Put the legend on top
+```
+
+## Treatment outcome
+
+One of the objectives of this study is to determine if Val66Met affects treatment outcomes. Treatment outcomes can be divided by all possible options (full remission, partial remission, non-remission and dropout) or recategorized into new classifications (good outcome and poor outcome).
+
+```{r treatment outcome complete and dichotomic by carrier status}
+# One possibility for treatment outcomes is considering full and partial remissions as good outcomes and non-remissions and dropouts as poor. For that reason, we can create a function to recode the outcome
+trans <- trans %>%
+  transform(outcome_3 = ifelse(outcome_2 %in% c("full remission", "partial remission"), "good", "poor")) 
+
+# Considering the possible outcomes combinations, we can make a comparison table between carrier status and outcomes
+trans %>%
+  select(bdnf_val2, outcome_2, outcome_3) %>% # select carrier status and outcomes variables
+  tbl_summary(by = bdnf_val2, # divide by carrier status
+              missing = "no",
+              label = list(outcome_2 ~ "Outcome", outcome_3 ~ "Outcome")) %>% # do not add missing counts
+  add_p(test = all_categorical() ~ "chisq.test") %>% # run a Chi-squared test
+  bold_labels() %>% # show in bold variable labels
+  bold_p(t = 0.05) # show in bold p-values lower than 0.05
+```
+
+```{r}
+## outcome (tetratomic) + Val66Met
+pwr::ES.h(0.39, 0.54)
+## outcome (tetratomic) + Val66Met
+pwr::ES.h(0.17, 0.19)
+## outcome (tetratomic) + Val66Met
+pwr::ES.h(0.18, 0.089)
+## outcome (tetratomic) + Val66Met
+pwr::ES.h(0.26, 0.19)
+## outcome (dichotomic) + Val66Met
+pwr::ES.h(0.56, 0.72)
+```
+
+Since there are only `r sum(trans$bdnf_val == "Met/Met")` people that are Met/Met, participants can be grouped by carrier status. 
+
+```{r treatment outcome by carrier status, fig.height=8, fig.width=11}
+# Prepare a list to store plots
+plots <- list()
+# Prepare a vector containing the different diagnoses to iterate through them
+diagnoses <- c("AN-R", "AN-P", "BN", "GD")
+
+all <- trans %>%
+  count(outcome_2, bdnf_val2) %>% # Count the combinations of outcomes and Val66Met carrier status
+  group_by(bdnf_val2) %>% # Group the counts by carriers status
+  mutate(pct = prop.table(n) * 100) %>% # Calculate the percentage
+  ggplot() + 
+  aes(bdnf_val2, pct, fill = outcome_2) + # Compare the proportion of outcomes across carriers and non-carriers and color by outcome
+  geom_bar(stat = "identity") + # Make it a bar plot. Add the show.legend argument so later the legend will be the same for all plots
+  labs(fill = "Treatment outcome", title = "All diagnoses") + # Change the X-axis title, the legend title and the title of the plot in a more appropriate way
+  geom_text(aes(label = paste0(sprintf("%1.1f", pct),"%")),
+            position = position_stack(vjust = 0.5)) + # Show the percentages in the plot and add the percentage symbol (%) to the labels 
+  theme_bw() + # Use the black and white theme
+  scale_y_continuous(labels = function(x) paste0(x,"%")) + # Add the percentage symbol to the labels from the Y-axis
+  scale_fill_manual(values = outcome_tetra, labels = c("Full remission", "Partial remission", "Non-remission", "Dropout")) + # Color the different outcome categories with the specified colors and with the specified labels
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank()) # Remove the X-axis and Y-axis titles
+
+# For loop to iterate through all diagnoses to produce plots comparing outcomes proportions across genotypes
+for (i in 1:length(diagnoses)){
+  p <- trans %>%
+    filter(diagnosis == diagnoses[i]) %>% # Filter for each diagnosis (as we are going to produce a plot for each diagnosis, we must filter by diagnosis and then generate the plot)
+    count(outcome_2, bdnf_val2) %>% # Count the combinations of outcomes and Val66Met genotypes
+    group_by(bdnf_val2) %>% # Group the counts by genotypes
+    mutate(pct = prop.table(n) * 100) %>% # Calculate the percentage
+    ggplot() + 
+    aes(bdnf_val2, pct, fill = outcome_2) + # Compare the proportion of outcomes across genotypes and color by outcome
+    geom_bar(stat = "identity", show.legend = TRUE) + # Make it a bar plot. Add the show.legend argument so later the legend will be the same for all plots
+    labs(x = "Genotypes", fill = "Treatment outcome", title = diagnoses[i]) + # Change the X-axis title, the legend title and the title of the plot in a more appropriate way
+    geom_text(aes(label = paste0(sprintf("%1.1f", pct),"%")),
+              position = position_stack(vjust = 0.5)) + # Show the percentages in the plot and add the percentage symbol (%) to the labels 
+    theme_bw() + # Use the black and white theme
+    scale_y_continuous(labels = function(x) paste0(x,"%")) + # Add the percentage symbol to the labels from the Y-axis
+    scale_fill_manual(values = outcome_tetra, labels = c("Full remission", "Partial remission", "Non-remission", "Dropout"), drop = FALSE) + # Color the different outcome categories with the specified colors and with the specified labels
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank()) # Remove the X-axis and the Y-axis titles
+  plots[[i]] <- p # Add the plot to the list of plots
+}
+
+guide_area() + (all + (plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]])) + # Combine all plots into a 2x2 layout
+  plot_layout(guides = "collect", nrow = 2, heights = c(1,10)) + # Collect all legends and use just one
+  plot_annotation(title = "Outcomes distributions by Val66Met groups", theme = theme(plot.title = element_text(hjust = 0.5, size = 17, face = "bold"))) & # Set the title in the center, big and bold
+  theme(legend.position = "top") # Put the legend on top
+```
+
+```{r treatment outcome dichotomic by carrier status, fig.height=8, fig.width=11}
+# Prepare a list to store plots
+plots <- list()
+
+# The following figure shows the distribution of treatment outcomes (using the complete variable but painting as a dichotomic variable)
+all <- trans %>%
+  count(outcome_2, bdnf_val2) %>% # Count the combinations of outcomes and Val66Met carrier status
+  group_by(bdnf_val2) %>% # Group the counts by carrier status
+  mutate(pct = prop.table(n) * 100) %>% # Calculate the percentage
+  ggplot() + 
+  aes(bdnf_val2, pct, fill = outcome_2) + # Compare the proportion of outcomes across carrier status and color by outcome
+  geom_bar(stat = "identity") + # Make it a bar plot. Add the show.legend argument so later the legend will be the same for all plots
+  labs(fill = "Treatment outcome", title = "All diagnoses") + # Change the X-axis title, the legent title and the title of the plot in a more appropriate way
+  geom_text(aes(label = paste0(sprintf("%1.1f", pct),"%")),
+            position = position_stack(vjust = 0.5)) + # Show the percentages in the plot and add the percentage symbol (%) to the labels 
+  theme_bw() + # black and white theme
+  scale_y_continuous(labels = function(x) paste0(x,"%")) + # Add the percentage symbol to the labels from the Y-axis
+  scale_fill_manual(values = outcome_dicho, labels = c("Full remission", "Partial remission", "Non-remission", "Dropout")) + # Color the different outcome categories with the specified colors and with the specified labels
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank()) # Remove the X-axis and the Y-axis titles
+
+# For loop to iterate through all diagnoses to produce plots comparing outcomes proportions across genotypes
+for (i in 1:length(diagnoses)){
+  p <- trans %>%
+    filter(diagnosis == diagnoses[i]) %>% # Filter for each diagnosis (as we are going to produce a plot for each diagnosis, we must filter by diagnosis and then generate the plot)
+    count(outcome_2, bdnf_val2) %>% # Count the combinations of outcomes and Val66Met carrier status
+    group_by(bdnf_val2) %>% # Group the counts by carrier status
+    mutate(pct = prop.table(n) * 100) %>% # Calculate the percentage
+    ggplot() +  
+    aes(bdnf_val2, pct, fill = outcome_2) + # Compare the proportion of outcomes across non-carriers and carriers and color by outcome
+    geom_bar(stat = "identity", show.legend = TRUE) + # Make it a bar plot. Add the show.legend argument so later the legend will be the same for all plots
+    labs(fill = "Treatment outcome", title = diagnoses[i]) + # Change the X-axis title, the legend title and the title of the plot in a more appropriate way
+    geom_text(aes(label = paste0(sprintf("%1.1f", pct),"%")),
+              position = position_stack(vjust = 0.5)) + # Show the percentages in the plot and add the percentage symbol (%) to the labels 
+    theme_bw() + # Use the black and white theme
+    scale_y_continuous(labels = function(x) paste0(x,"%")) + # Add the percentage symbol to the labels from the Y-axis
+    scale_fill_manual(values = outcome_dicho, labels = c("Full remission", "Partial remission", "Non-remission", "Dropout"), drop = FALSE) + # Color the different outcome categories with the specified colors and with the specified labels
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank()) # Remove the X-axis and the Y-axis titles
+  plots[[i]] <- p # Add the plot to the list of plots
+}
+
+guide_area() + (all + (plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]])) + # Combine all plots into a 2x2 layout
+  plot_layout(guides = "collect", nrow = 2, heights = c(1,10)) + # Collect all legends and use just one
+  plot_annotation(title = "Outcomes distributions by Val66Met groups", theme = theme(plot.title = element_text(hjust = 0.5, size = 17, face = "bold"))) & # Set the title in the center, big and bold
+  theme(legend.position = "top") # Put the legend on top
+```
