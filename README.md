@@ -9,7 +9,13 @@ To explore these associations, the Val66Met single nucleotide polymorphism (SNP)
 *	`base.xlsx`: dataset containing data from all patients for all diagnoses. <i> Due to data protection reasons, input files cannot be shared.</i>
 
 ## Scripts
-*	`	Analysis.Rmd`: script exploring the baseline characteristics of participants according to diagnosis. The output file was `Analysis.html`.
+*	`Analysis.Rmd`: script exploring:
+ * * the baseline characteristics of participants according to diagnosis (Table 1).
+ * * the baseline sociodemographic, clinical and psychometric variables between carriers and non-carriers of the Met variant within the <i> BDNF </i> gene (Table S1 and Figure 1).
+ * * severity scores between carriers and non-carriers of the Met variant within the <i> BDNF </i> gene (Figure 2).
+ * * treatment response between carriers and non-carriers of the Met variant within the <i> BDNF </i> gene (Table S2 and Figure 3).
+
+The output file was `Analysis.html`.
 
 ## Requirements
 * `gtsummary` package
